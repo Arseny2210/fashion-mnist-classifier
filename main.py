@@ -8,21 +8,21 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 import tensorflow as tf
 
-app = FastAPI(title="Fashion-MNIST Classifier")
+app = FastAPI(title="Классификатор одежды")
 
 templates = Jinja2Templates(directory="templates")
 
 CLASSES = [
-    "Футболка / Топ (T-shirt/top)",
-    "Брюки (Trouser)",
-    "Пуловер / Свитер (Pullover)",
-    "Платье (Dress)",
-    "Пальто (Coat)",
-    "Сандалии (Sandal)",
-    "Рубашка (Shirt)",
-    "Кроссовки (Sneaker)",
-    "Сумка (Bag)",
-    "Ботильоны (Ankle boot)"
+    "Футболка",
+    "Брюки",
+    "Свитер",
+    "Платье",
+    "Пальто",
+    "Сандалии",
+    "Рубашка",
+    "Кроссовки",
+    "Сумка",
+    "Ботильоны"
 ]
 
 MODEL_PATH = "fashion_mnist_cnn.keras"
@@ -91,7 +91,10 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
 
 @app.get("/", response_class=HTMLResponse)
 def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "classes": CLASSES
+    })
 
 @app.post("/predict", response_class=HTMLResponse)
 async def predict(request: Request, file: UploadFile = File(...)):
@@ -100,16 +103,32 @@ async def predict(request: Request, file: UploadFile = File(...)):
         tensor, img_b64 = preprocess_image(content)
         preds = model.predict(tensor, verbose=0)[0]
         class_idx = int(np.argmax(preds))
-        confidence = f"{preds[class_idx]:.2%}"
+        confidence_val = float(preds[class_idx])
+        confidence_str = f"{confidence_val * 100:.1f}%"
         predicted_class = CLASSES[class_idx]
+        
+        # Топ-3 альтернативных вариантов
+        sorted_indices = np.argsort(preds)[::-1]
+        other_preds = []
+        for idx in sorted_indices[1:4]:
+            prob = float(preds[idx])
+            if prob > 0.005:  # показывать только если вероятность больше 0.5%
+                other_preds.append({
+                    "name": CLASSES[idx],
+                    "prob": f"{prob * 100:.1f}%",
+                    "percent": round(prob * 100, 1)
+                })
         
         return templates.TemplateResponse(
             "index.html",
             {
                 "request": request,
                 "predicted_class": predicted_class,
-                "confidence": confidence,
-                "image_base64": img_b64
+                "confidence": confidence_str,
+                "confidence_percent": round(confidence_val * 100, 1),
+                "other_preds": other_preds,
+                "image_base64": img_b64,
+                "classes": CLASSES
             }
         )
     except Exception as e:
@@ -117,11 +136,11 @@ async def predict(request: Request, file: UploadFile = File(...)):
             "index.html",
             {
                 "request": request,
-                "error": f"Ошибка при обработке файла: {e}"
+                "error": f"Не удалось распознать фото: {e}",
+                "classes": CLASSES
             }
         )
 
-# API endpoint для JSON
 @app.post("/api/predict")
 async def api_predict(file: UploadFile = File(...)):
     content = await file.read()
