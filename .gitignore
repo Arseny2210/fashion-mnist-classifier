@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+static/plots/
+*.docx
+test_user_sneaker.png
+preview_crop.png
+sneaker_only.png
+model.tflite
+fashion_mnist_dense.keras
