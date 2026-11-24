@@ -3,157 +3,471 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Классификатор одежды | FastAPI Fashion-MNIST</title>
+    <title>Atelier ML — Fashion-MNIST Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
+        :root {
+            --bg: #09090b;
+            --surface: #121215;
+            --surface-hover: #18181c;
+            --border: #27272a;
+            --border-focus: #52525b;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #ffffff;
+            --accent-bg: #27272a;
+            --badge-bg: rgba(255, 255, 255, 0.08);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 40px 20px;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.15), transparent),
+                radial-gradient(circle at 50% 100%, rgba(24, 24, 27, 0.8), transparent);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 580px;
+        }
+
+        /* Шапка */
+        header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .brand-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        h1 {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        /* Главная карточка */
+        .card {
+            background-color: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.2s ease;
+        }
+
+        /* Зона загрузки */
+        .dropzone {
+            border: 1px dashed var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-md);
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--border-focus);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .dropzone-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 14px;
+            border-radius: 10px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .dropzone-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .dropzone-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Быстрые пресеты */
+        .presets {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .preset-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-right: 4px;
+        }
+
+        .preset-btn {
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.15s ease;
+        }
+
+        .preset-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--border-focus);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* Кнопка отправки */
+        .submit-btn {
+            width: 100%;
+            margin-top: 18px;
+            background: var(--accent);
+            color: #09090b;
+            border: none;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.92;
+        }
+
+        .submit-btn:active {
+            transform: scale(0.99);
+        }
+
+        /* Результат */
+        .result-panel {
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 20px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+
+        @media (max-width: 500px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        .preview-wrapper {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
             justify-content: center;
         }
-        .container {
-            background-color: #ffffff;
-            max-width: 600px;
+
+        .preview-wrapper img {
             width: 100%;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            text-align: center;
+            height: 100%;
+            object-fit: contain;
         }
-        h1 {
-            color: #1a365d;
-            margin-bottom: 8px;
-            font-size: 24px;
+
+        .result-meta {
+            text-align: left;
         }
-        p.desc {
-            color: #64748b;
-            font-size: 14px;
-            margin-bottom: 25px;
+
+        @media (max-width: 500px) {
+            .result-meta {
+                text-align: center;
+            }
         }
-        .upload-form {
-            border: 2px dashed #cbd5e1;
-            padding: 25px;
-            border-radius: 8px;
-            background-color: #f8fafc;
-            margin-bottom: 25px;
+
+        .result-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #22c55e;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        input[type="file"] {
-            margin-bottom: 15px;
-            font-size: 14px;
+
+        @media (max-width: 500px) {
+            .result-tag {
+                justify-content: center;
+            }
         }
-        button {
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background-color: #1d4ed8;
-        }
-        .result-box {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        .result-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e40af;
+
+        .result-name {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
             margin-bottom: 6px;
         }
-        .result-conf {
-            font-size: 16px;
-            color: #2563eb;
-            margin-bottom: 15px;
-        }
-        .preview-img {
-            max-width: 180px;
-            max-height: 180px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            margin-bottom: 15px;
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .classes-list {
-            margin-top: 20px;
-            text-align: left;
+
+        .result-accuracy {
             font-size: 13px;
-            color: #64748b;
-            background-color: #f8fafc;
-            padding: 15px;
-            border-radius: 6px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .classes-list summary {
+
+        @media (max-width: 500px) {
+            .result-accuracy {
+                justify-content: center;
+            }
+        }
+
+        .accuracy-pill {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Список классов */
+        .classes-drawer {
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .classes-drawer summary {
             cursor: pointer;
-            font-weight: bold;
-            color: #334155;
+            font-weight: 600;
+            color: var(--text-primary);
+            user-select: none;
+            outline: none;
         }
-        .error-box {
-            background-color: #fef2f2;
-            color: #b91c1c;
-            border: 1px solid #fecaca;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 15px;
+
+        .classes-grid {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Футер */
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>👕 Классификация одежды</h1>
-    <p class="desc">Простой веб-сервис на FastAPI с моделью, обученной на Fashion-MNIST</p>
+    <header>
+        <div class="brand-badge">
+            <span class="dot"></span>
+            CNN • Fashion-MNIST
+        </div>
+        <h1>Atelier Classifier</h1>
+        <p class="subtitle">Нейросетевая система классификации одежды, обуви и аксессуаров в реальном времени</p>
+    </header>
 
-    <form class="upload-form" action="/predict" method="post" enctype="multipart/form-data">
-        <p style="margin-bottom: 10px; font-weight: 500;">Выберите фото предмета одежды или обуви:</p>
-        <input type="file" name="file" accept="image/*" required><br>
-        <button type="submit">Распознать</button>
-    </form>
+    <div class="card">
+        <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data">
+            <div class="dropzone" id="dropArea">
+                <input type="file" id="fileInput" name="file" accept="image/*" required>
+                <div class="dropzone-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <div class="dropzone-title" id="dropTitle">Перетащите изображение или выберите файл</div>
+                <div class="dropzone-sub">PNG, JPG, WEBP • автокроп и нормализация</div>
+            </div>
 
-    {% if error %}
-        <div class="error-box">
+            <button type="submit" class="submit-btn" id="submitBtn">Классифицировать предмет</button>
+        </form>
+
+        {% if error %}
+        <div style="margin-top: 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 12px; border-radius: var(--radius-sm); font-size: 13px;">
             {{ error }}
         </div>
-    {% endif %}
+        {% endif %}
 
-    {% if predicted_class %}
-        <div class="result-box">
-            {% if image_base64 %}
-                <img class="preview-img" src="data:image/jpeg;base64,{{ image_base64 }}" alt="Загруженное фото">
-            {% endif %}
-            <div class="result-title">{{ predicted_class }}</div>
-            <div class="result-conf">Уверенность модели: {{ confidence }}</div>
+        {% if predicted_class %}
+        <div class="result-panel">
+            <div class="result-grid">
+                <div class="preview-wrapper">
+                    {% if image_base64 %}
+                    <img src="data:image/jpeg;base64,{{ image_base64 }}" alt="Анализируемый объект">
+                    {% endif %}
+                </div>
+                <div class="result-meta">
+                    <div class="result-tag">
+                        <span>●</span> Распознано нейросетью
+                    </div>
+                    <div class="result-name">{{ predicted_class }}</div>
+                    <div class="result-accuracy">
+                        Уверенность: <span class="accuracy-pill">{{ confidence }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
-    {% endif %}
+        {% endif %}
 
-    <details class="classes-list">
-        <summary>Доступные классы датасета Fashion-MNIST (10 шт.)</summary>
-        <ul style="margin-top: 8px; padding-left: 20px; line-height: 1.6;">
-            <li>0: Футболка / Топ (T-shirt/top)</li>
-            <li>1: Брюки (Trouser)</li>
-            <li>2: Пуловер / Свитер (Pullover)</li>
-            <li>3: Платье (Dress)</li>
-            <li>4: Пальто (Coat)</li>
-            <li>5: Сандалии (Sandal)</li>
-            <li>6: Рубашка (Shirt)</li>
-            <li>7: Кроссовки (Sneaker)</li>
-            <li>8: Сумка (Bag)</li>
-            <li>9: Ботильоны (Ankle boot)</li>
-        </ul>
-    </details>
+        <details class="classes-drawer">
+            <summary>10 классов датасета Fashion-MNIST</summary>
+            <div class="classes-grid">
+                <div>01. Футболка / Топ</div>
+                <div>06. Сандалии</div>
+                <div>02. Брюки</div>
+                <div>07. Рубашка</div>
+                <div>03. Пуловер</div>
+                <div>08. Кроссовки</div>
+                <div>04. Платье</div>
+                <div>09. Сумка</div>
+                <div>05. Пальто</div>
+                <div>10. Ботильоны</div>
+            </div>
+        </details>
+    </div>
+
+    <footer>
+        FastAPI • PyTorch/TensorFlow • Architecture: CNN 4-Layer
+    </footer>
 </div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const dropArea = document.getElementById('dropArea');
+    const dropTitle = document.getElementById('dropTitle');
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+            dropTitle.textContent = e.target.files[0].name;
+            dropArea.style.borderColor = '#22c55e';
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropArea.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('dragover');
+        }, false);
+    });
+</script>
 
 </body>
 </html>
