@@ -9,3 +9,5 @@ preview_crop.png
 sneaker_only.png
 model.tflite
 fashion_mnist_dense.keras
+debug_preproc/
+server.log

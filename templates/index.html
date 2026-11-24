@@ -1106,7 +1106,16 @@
     }
 
     function showError(msg) {
-        errorBox.textContent = msg;
+        errorBox.innerHTML = `
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div style="line-height: 1.45; font-weight: 500;">${msg}</div>
+            </div>
+        `;
         errorBox.style.display = 'block';
         form.style.display = 'block';
         setTimeout(() => {
