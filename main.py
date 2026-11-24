@@ -143,16 +143,39 @@ async def predict(request: Request, file: UploadFile = File(...)):
 
 @app.post("/api/predict")
 async def api_predict(file: UploadFile = File(...)):
-    content = await file.read()
-    tensor, _ = preprocess_image(content)
-    preds = model.predict(tensor, verbose=0)[0]
-    class_idx = int(np.argmax(preds))
-    return {
-        "class_id": class_idx,
-        "class_name": CLASSES[class_idx],
-        "confidence": float(preds[class_idx]),
-        "all_probabilities": {CLASSES[i]: float(preds[i]) for i in range(10)}
-    }
+    try:
+        content = await file.read()
+        tensor, img_b64 = preprocess_image(content)
+        preds = model.predict(tensor, verbose=0)[0]
+        class_idx = int(np.argmax(preds))
+        confidence_val = float(preds[class_idx])
+        confidence_str = f"{confidence_val * 100:.1f}%"
+        predicted_class = CLASSES[class_idx]
+        
+        sorted_indices = np.argsort(preds)[::-1]
+        other_preds = []
+        for idx in sorted_indices[1:4]:
+            prob = float(preds[idx])
+            if prob > 0.005:
+                other_preds.append({
+                    "name": CLASSES[idx],
+                    "prob": f"{prob * 100:.1f}%",
+                    "percent": round(prob * 100, 1)
+                })
+        
+        return {
+            "success": True,
+            "predicted_class": predicted_class,
+            "confidence": confidence_str,
+            "confidence_percent": round(confidence_val * 100, 1),
+            "other_preds": other_preds,
+            "image_base64": img_b64
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Не удалось распознать фото: {e}"
+        }
 
 if __name__ == "__main__":
     import uvicorn

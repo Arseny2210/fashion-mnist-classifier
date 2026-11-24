@@ -46,7 +46,7 @@
             overflow-x: hidden;
         }
 
-        /* 3D фоновые световые сферы для темного зеркального преломления */
+        /* 3D фоновые световые сферы */
         .ambient-layer {
             position: fixed;
             inset: 0;
@@ -102,7 +102,7 @@
             z-index: 1;
         }
 
-        /* Шапка сервиса */
+        /* Шапка */
         .header {
             text-align: center;
             margin-bottom: 32px;
@@ -125,7 +125,7 @@
             margin: 0 auto;
         }
 
-        /* Двухколоночная компоновка: слева основная карточка, справа стильная панель категорий */
+        /* Двухколоночный каркас */
         .workspace-grid {
             display: grid;
             grid-template-columns: 1fr 340px;
@@ -140,7 +140,7 @@
             }
         }
 
-        /* Основная темная зеркальная карточка */
+        /* Основная стеклянная карточка */
         .glass-card {
             background: var(--glass-surface);
             backdrop-filter: blur(32px) saturate(200%);
@@ -156,7 +156,7 @@
             transform-style: preserve-3d;
         }
 
-        /* Динамический зеркальный блик на темном стекле */
+        /* Зеркальный блик */
         .mirror-sheen {
             position: absolute;
             inset: 0;
@@ -167,11 +167,110 @@
             transition: background 0.15s ease;
         }
 
-        /* Блок результата распознавания (без 3D-эффекта, чистый минимализм) */
+        /* Анимированный лоадер сканирования */
+        .scanner-loader {
+            display: none;
+            opacity: 0;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            margin-bottom: 20px;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            transform: translateY(8px);
+        }
+
+        .scanner-loader.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scan-window {
+            width: 104px;
+            height: 104px;
+            border-radius: var(--radius-md);
+            background: rgba(10, 13, 20, 0.9);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 0 28px -4px rgba(59, 130, 246, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scan-window img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0.75;
+            filter: contrast(1.1);
+        }
+
+        .scan-beam {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #3b82f6, #93c5fd, #3b82f6, transparent);
+            box-shadow: 0 0 14px 2px #60a5fa;
+            animation: beamScan 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes beamScan {
+            0% { top: 4px; }
+            100% { top: calc(100% - 7px); }
+        }
+
+        .orbit-ring {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(59, 130, 246, 0.15);
+            border-top-color: #3b82f6;
+            border-right-color: #93c5fd;
+            border-radius: 50%;
+            animation: ringSpin 0.75s linear infinite;
+            margin-bottom: 14px;
+        }
+
+        @keyframes ringSpin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+
+        .loader-sub {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        /* Блок результата распознавания (с плавной анимацией появления) */
         .result-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             margin-bottom: 28px;
             padding-bottom: 24px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .result-section.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .result-label {
@@ -200,7 +299,7 @@
             }
         }
 
-        /* Превью фото без 3D отражений и теней */
+        /* Превью фото без 3D-отражения */
         .preview-box {
             width: 110px;
             height: 110px;
@@ -263,7 +362,7 @@
             margin-bottom: 6px;
         }
 
-        /* Шкала точности */
+        /* Шкала точности с плавной анимацией ширины */
         .confidence-row {
             display: flex;
             align-items: center;
@@ -299,8 +398,10 @@
 
         .meter-fill {
             height: 100%;
+            width: 0%;
             background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
             border-radius: 999px;
+            transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* Альтернативы */
@@ -341,6 +442,7 @@
             background: rgba(59, 130, 246, 0.12);
             border: 1px solid rgba(59, 130, 246, 0.3);
             border-radius: var(--radius-sm);
+            cursor: pointer;
             text-decoration: none;
             transition: all 0.2s ease;
         }
@@ -350,7 +452,11 @@
             border-color: #60a5fa;
         }
 
-        /* Темная зона загрузки со стеклом */
+        /* Область загрузки */
+        .form-area {
+            transition: opacity 0.3s ease;
+        }
+
         .glass-dropzone {
             border: 2px dashed rgba(255, 255, 255, 0.14);
             background: rgba(255, 255, 255, 0.02);
@@ -453,7 +559,7 @@
             color: var(--text-dim);
         }
 
-        /* 3D кнопка */
+        /* Кнопка */
         .btn-3d {
             display: block;
             width: 100%;
@@ -485,9 +591,11 @@
             box-shadow: none;
             cursor: not-allowed;
             transform: none;
+            opacity: 0.6;
         }
 
         .error-message {
+            display: none;
             background: rgba(239, 68, 68, 0.12);
             border: 1px solid rgba(239, 68, 68, 0.3);
             color: #f87171;
@@ -498,7 +606,7 @@
             transform: translateZ(20px);
         }
 
-        /* Панель категорий справа: структурированная стеклянная 3D сетка */
+        /* Панель категорий */
         .sidebar-card {
             background: var(--glass-card);
             backdrop-filter: blur(32px) saturate(200%);
@@ -544,14 +652,12 @@
             margin-top: 4px;
         }
 
-        /* Сетка категорий 2 колонки x 5 рядов */
         .categories-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
         }
 
-        /* Индивидуальная стеклянная карточка предмета */
         .category-chip {
             display: flex;
             align-items: center;
@@ -560,7 +666,7 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius-md);
             padding: 10px 12px;
-            transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+            transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
             user-select: none;
             position: relative;
             overflow: hidden;
@@ -583,6 +689,7 @@
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.08);
             flex-shrink: 0;
+            transition: all 0.2s ease;
         }
 
         .chip-name {
@@ -592,9 +699,10 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: all 0.2s ease;
         }
 
-        /* Активная подсветка для распознанной категории */
+        /* Активная подсветка */
         .category-chip.is-active {
             background: rgba(59, 130, 246, 0.18);
             border: 1px solid rgba(59, 130, 246, 0.6);
@@ -621,6 +729,12 @@
             border-radius: 50%;
             background: #22c55e;
             box-shadow: 0 0 6px #22c55e;
+            animation: pulseDot 1.5s infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.25); opacity: 0.8; }
         }
 
         footer {
@@ -635,7 +749,6 @@
 </head>
 <body>
 
-<!-- 3D атмосферный неоновый слой -->
 <div class="ambient-layer">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
@@ -649,51 +762,49 @@
     </header>
 
     <div class="workspace-grid">
-        <!-- Левая колонка: 3D зеркальная карточка анализа -->
+        <!-- Левая колонка: 3D зеркальная карточка -->
         <div class="glass-card" id="mainCard">
             <div class="mirror-sheen" id="mirrorSheen"></div>
 
-            {% if error %}
-            <div class="error-message">
-                {{ error }}
-            </div>
-            {% endif %}
+            <div class="error-message" id="errorBox"></div>
 
-            {% if predicted_class %}
-            <div class="result-section">
+            <!-- Анимированный лоадер сканирования (без перезагрузки) -->
+            <div class="scanner-loader" id="scannerLoader">
+                <div class="scan-window">
+                    <img id="loaderPreviewImg" src="" alt="Сканирование">
+                    <div class="scan-beam"></div>
+                </div>
+                <div class="orbit-ring"></div>
+                <div class="loader-title">Анализ изображения...</div>
+                <div class="loader-sub">Нейросеть распознает форму и текстуру вещи</div>
+            </div>
+
+            <!-- Блок результата распознавания (появляется плавно) -->
+            <div class="result-section" id="resultSection">
                 <div class="result-label">Результат распознавания</div>
                 <div class="result-mirror-box">
                     <div class="preview-box">
-                        {% if image_base64 %}
-                        <img src="data:image/jpeg;base64,{{ image_base64 }}" alt="Фото объекта">
-                        {% endif %}
+                        <img id="resultImg" src="" alt="Фото объекта">
                     </div>
                     <div class="result-content">
                         <div class="status-badge">
                             <span class="status-dot"></span>
                             Категория определена
                         </div>
-                        <div class="class-title">{{ predicted_class }}</div>
+                        <div class="class-title" id="resultClassName"></div>
 
                         <div class="confidence-row">
                             <span class="confidence-label">Точность:</span>
                             <div class="meter-track">
-                                <div class="meter-fill" style="width: {{ confidence_percent }}%;"></div>
+                                <div class="meter-fill" id="meterFill"></div>
                             </div>
-                            <span class="confidence-value">{{ confidence }}</span>
+                            <span class="confidence-value" id="resultConfidence"></span>
                         </div>
 
-                        {% if other_preds %}
-                        <div class="alternatives">
-                            Другие варианты:
-                            {% for item in other_preds %}
-                            <span class="alt-pill">{{ item.name }}: {{ item.prob }}</span>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
+                        <div class="alternatives" id="resultAlternatives"></div>
 
                         <div>
-                            <a href="/" class="btn-reset">
+                            <button type="button" class="btn-reset" id="btnReset">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
                                     <path d="M21 3v5h-5"></path>
@@ -701,14 +812,14 @@
                                     <path d="M8 16H3v5"></path>
                                 </svg>
                                 Загрузить другое фото
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
 
-            <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data">
+            <!-- Форма загрузки (без перезагрузки страницы) -->
+            <form class="form-area" id="uploadForm">
                 <div class="glass-dropzone" id="dropArea">
                     <input type="file" id="fileInput" name="file" accept="image/*" required>
                     <div class="drop-icon-3d">
@@ -730,11 +841,11 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-3d" id="submitBtn">Определить категорию</button>
+                <button type="submit" class="btn-3d" id="submitBtn" disabled>Определить категорию</button>
             </form>
         </div>
 
-        <!-- Правая колонка: структурированная панель поддерживаемых категорий с 3D подсветкой -->
+        <!-- Правая колонка: панель поддерживаемых категорий -->
         <div class="sidebar-card" id="sidebarCard">
             <div class="sidebar-header">
                 <div class="sidebar-title">
@@ -745,55 +856,45 @@
             </div>
 
             <div class="categories-grid">
-                <div class="category-chip {% if predicted_class == 'Футболка' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Футболка">
                     <span class="chip-icon">👕</span>
                     <span class="chip-name">Футболка</span>
-                    {% if predicted_class == 'Футболка' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Брюки' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Брюки">
                     <span class="chip-icon">👖</span>
                     <span class="chip-name">Брюки</span>
-                    {% if predicted_class == 'Брюки' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Свитер' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Свитер">
                     <span class="chip-icon">🧥</span>
                     <span class="chip-name">Свитер</span>
-                    {% if predicted_class == 'Свитер' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Платье' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Платье">
                     <span class="chip-icon">👗</span>
                     <span class="chip-name">Платье</span>
-                    {% if predicted_class == 'Платье' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Пальто' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Пальто">
                     <span class="chip-icon">🧥</span>
                     <span class="chip-name">Пальто</span>
-                    {% if predicted_class == 'Пальто' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Сандалии' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Сандалии">
                     <span class="chip-icon">👡</span>
                     <span class="chip-name">Сандалии</span>
-                    {% if predicted_class == 'Сандалии' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Рубашка' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Рубашка">
                     <span class="chip-icon">👔</span>
                     <span class="chip-name">Рубашка</span>
-                    {% if predicted_class == 'Рубашка' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Кроссовки' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Кроссовки">
                     <span class="chip-icon">👟</span>
                     <span class="chip-name">Кроссовки</span>
-                    {% if predicted_class == 'Кроссовки' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Сумка' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Сумка">
                     <span class="chip-icon">👜</span>
                     <span class="chip-name">Сумка</span>
-                    {% if predicted_class == 'Сумка' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
-                <div class="category-chip {% if predicted_class == 'Ботильоны' %}is-active{% endif %}">
+                <div class="category-chip" data-category="Ботильоны">
                     <span class="chip-icon">👢</span>
                     <span class="chip-name">Ботильоны</span>
-                    {% if predicted_class == 'Ботильоны' %}<span class="active-badge-dot"></span>{% endif %}
                 </div>
             </div>
         </div>
@@ -835,7 +936,7 @@
         });
     }
 
-    // Выбор файла и локальный предпросмотр
+    // Элементы интерфейса
     const fileInput = document.getElementById('fileInput');
     const dropArea = document.getElementById('dropArea');
     const dropTitle = document.getElementById('dropTitle');
@@ -845,15 +946,29 @@
     const previewSize = document.getElementById('previewSize');
     const submitBtn = document.getElementById('submitBtn');
     const form = document.getElementById('uploadForm');
+    const errorBox = document.getElementById('errorBox');
+
+    const scannerLoader = document.getElementById('scannerLoader');
+    const loaderPreviewImg = document.getElementById('loaderPreviewImg');
+
+    const resultSection = document.getElementById('resultSection');
+    const resultImg = document.getElementById('resultImg');
+    const resultClassName = document.getElementById('resultClassName');
+    const resultConfidence = document.getElementById('resultConfidence');
+    const meterFill = document.getElementById('meterFill');
+    const resultAlternatives = document.getElementById('resultAlternatives');
+    const btnReset = document.getElementById('btnReset');
+
+    let selectedFile = null;
 
     fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleFileSelect(file);
+        if (e.target.files && e.target.files[0]) {
+            handleFileSelect(e.target.files[0]);
         }
     });
 
     function handleFileSelect(file) {
+        selectedFile = file;
         dropTitle.textContent = "Файл выбран: " + file.name;
         dropArea.style.borderColor = '#3b82f6';
         dropArea.style.backgroundColor = 'rgba(59, 130, 246, 0.08)';
@@ -864,7 +979,9 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             previewImg.src = e.target.result;
+            loaderPreviewImg.src = e.target.result;
             clientPreview.style.display = 'flex';
+            submitBtn.disabled = false;
         };
         reader.readAsDataURL(file);
     }
@@ -883,9 +1000,148 @@
         });
     });
 
-    form.addEventListener('submit', () => {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Обработка фотографии...';
+    dropArea.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect(e.dataTransfer.files[0]);
+        }
+    });
+
+    // Отправка формы БЕЗ перезагрузки страницы (AJAX / Fetch)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!selectedFile) return;
+
+        errorBox.style.display = 'none';
+
+        // Мгновенно переключаем на анимированный лоадер сканирования
+        form.style.display = 'none';
+        scannerLoader.style.display = 'flex';
+        requestAnimationFrame(() => {
+            scannerLoader.classList.add('active');
+        });
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        try {
+            const startTime = Date.now();
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            // Гарантируем приятную длительность анимации лоадера (минимум 700мс)
+            const elapsed = Date.now() - startTime;
+            const delay = Math.max(0, 700 - elapsed);
+
+            setTimeout(() => {
+                scannerLoader.classList.remove('active');
+                setTimeout(() => {
+                    scannerLoader.style.display = 'none';
+                    if (data.success) {
+                        showResult(data);
+                    } else {
+                        showError(data.error || 'Произошла ошибка при обработке');
+                    }
+                }, 200);
+            }, delay);
+
+        } catch (err) {
+            scannerLoader.classList.remove('active');
+            scannerLoader.style.display = 'none';
+            showError('Не удалось соединиться с сервером: ' + err.message);
+        }
+    });
+
+    function showResult(data) {
+        resultImg.src = 'data:image/jpeg;base64,' + data.image_base64;
+        resultClassName.textContent = data.predicted_class;
+        resultConfidence.textContent = data.confidence;
+        
+        // Сброс и плавная анимация шкалы точности
+        meterFill.style.width = '0%';
+        setTimeout(() => {
+            meterFill.style.width = data.confidence_percent + '%';
+        }, 100);
+
+        // Альтернативные варианты
+        if (data.other_preds && data.other_preds.length > 0) {
+            let html = 'Другие варианты: ';
+            data.other_preds.forEach(item => {
+                html += `<span class="alt-pill">${item.name}: ${item.prob}</span>`;
+            });
+            resultAlternatives.innerHTML = html;
+            resultAlternatives.style.display = 'flex';
+        } else {
+            resultAlternatives.style.display = 'none';
+        }
+
+        // Показываем блок результата
+        resultSection.style.display = 'block';
+        setTimeout(() => {
+            resultSection.classList.add('show');
+        }, 30);
+
+        // Интерактивная подсветка карточки категории в правой колонке
+        highlightCategory(data.predicted_class);
+    }
+
+    function highlightCategory(categoryName) {
+        document.querySelectorAll('.category-chip').forEach(chip => {
+            chip.classList.remove('is-active');
+            const dot = chip.querySelector('.active-badge-dot');
+            if (dot) dot.remove();
+        });
+
+        const targetChip = document.querySelector(`.category-chip[data-category="${categoryName}"]`);
+        if (targetChip) {
+            targetChip.classList.add('is-active');
+            const dot = document.createElement('span');
+            dot.className = 'active-badge-dot';
+            targetChip.appendChild(dot);
+        }
+    }
+
+    function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = 'block';
+        form.style.display = 'block';
+        setTimeout(() => {
+            form.style.opacity = '1';
+        }, 30);
+    }
+
+    // Сброс и возврат к выбору другого фото БЕЗ перезагрузки страницы
+    btnReset.addEventListener('click', () => {
+        resultSection.classList.remove('show');
+        setTimeout(() => {
+            resultSection.style.display = 'none';
+            
+            // Очищаем инпуты
+            selectedFile = null;
+            fileInput.value = '';
+            clientPreview.style.display = 'none';
+            dropTitle.textContent = 'Выберите фотографию или перетащите файл сюда';
+            dropArea.style.borderColor = 'rgba(255, 255, 255, 0.14)';
+            dropArea.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+            submitBtn.disabled = true;
+
+            // Возвращаем форму
+            form.style.display = 'block';
+            setTimeout(() => {
+                form.style.opacity = '1';
+            }, 30);
+
+            // Убираем подсветку в категориях
+            document.querySelectorAll('.category-chip').forEach(chip => {
+                chip.classList.remove('is-active');
+                const dot = chip.querySelector('.active-badge-dot');
+                if (dot) dot.remove();
+            });
+        }, 300);
     });
 </script>
 
