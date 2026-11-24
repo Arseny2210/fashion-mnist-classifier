@@ -44,48 +44,54 @@ def preprocess_image(image_bytes: bytes) -> tuple[np.ndarray, str]:
     raw_img.copy().convert("RGB").save(buf, format="JPEG", quality=85)
     img_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     
-    # Автоопределение фона и автокроп границ объекта
+    # Оценка фона по краям изображения
     edges = np.concatenate([arr[0, :], arr[-1, :], arr[:, 0], arr[:, -1]])
     bg = float(np.median(edges))
     
-    if bg < 50:
-        mask = arr > 25
-        if np.any(mask):
-            y_idx, x_idx = np.where(mask)
-            cropped = img.crop((x_idx.min(), y_idx.min(), x_idx.max(), y_idx.max()))
-        else:
-            cropped = img
-    else:
-        diff = np.abs(arr - bg)
-        mask = diff > 15
-        if np.any(mask):
-            y_idx, x_idx = np.where(mask)
-            ymin, ymax = y_idx.min(), y_idx.max()
-            xmin, xmax = x_idx.min(), x_idx.max()
-            pad_y = int((ymax - ymin) * 0.04) + 1
-            pad_x = int((xmax - xmin) * 0.04) + 1
-            ymin, ymax = max(0, ymin - pad_y), min(h, ymax + pad_y)
-            xmin, xmax = max(0, xmin - pad_x), min(w, xmax + pad_x)
-            cropped = img.crop((xmin, ymin, xmax, ymax))
-        else:
-            cropped = img
-            
-        inv = ImageOps.invert(cropped)
-        inv_arr = np.array(inv, dtype=np.float32)
-        corner_val = np.median([inv_arr[0,0], inv_arr[0,-1], inv_arr[-1,0], inv_arr[-1,-1]])
-        inv_arr = np.maximum(0.0, inv_arr - corner_val)
-        if inv_arr.max() > 0:
-            inv_arr = (inv_arr / inv_arr.max()) * 255.0
-        cropped = Image.fromarray(inv_arr.astype(np.uint8))
+    diff = np.abs(arr - bg)
+    mask = diff > 15.0
+    if mask.sum() < 100:
+        mask = diff > 8.0
         
-    cw, ch = cropped.size
-    scale = 22.0 / max(cw, ch)
-    nw, nh = max(1, int(cw * scale)), max(1, int(ch * scale))
-    resized = cropped.resize((nw, nh), Image.Resampling.LANCZOS)
+    y_idx, x_idx = np.where(mask)
+    if len(y_idx) > 0:
+        ymin, ymax = y_idx.min(), y_idx.max()
+        xmin, xmax = x_idx.min(), x_idx.max()
+        pad_y = int((ymax - ymin) * 0.04) + 1
+        pad_x = int((xmax - xmin) * 0.04) + 1
+        ymin, ymax = max(0, ymin - pad_y), min(h, ymax + pad_y)
+        xmin, xmax = max(0, xmin - pad_x), min(w, xmax + pad_x)
+    else:
+        ymin, ymax, xmin, xmax = 0, h, 0, w
+        
+    crop = arr[ymin:ymax, xmin:xmax]
+    crop_mask = mask[ymin:ymax, xmin:xmax]
     
+    obj_mean = float(crop[crop_mask].mean()) if crop_mask.sum() > 0 else float(crop.mean())
+    corners = [crop[0, 0], crop[0, -1], crop[-1, 0], crop[-1, -1]]
+    corner_val = float(np.median(corners))
+    
+    if obj_mean < bg:
+        # Темный объект на светлом фоне (например, обувь на белом фоне)
+        inv = 255.0 - crop
+        inv_corners = 255.0 - corner_val
+        fg = np.maximum(0.0, inv - inv_corners)
+    else:
+        # Светлый объект на темном/сером фоне (например, белый свитер на сером фоне)
+        fg = np.maximum(0.0, crop - corner_val)
+        
+    if fg.max() > 0:
+        fg = (fg / fg.max()) * 255.0
+        
+    cw, ch = fg.shape[1], fg.shape[0]
+    # Адаптивное масштабирование под пропорции предмета в Fashion-MNIST
+    target_size = 22.0 if (cw / ch > 1.25) else 24.0
+    scale = target_size / max(cw, ch)
+    nw, nh = max(1, int(cw * scale)), max(1, int(ch * scale))
+    resized = Image.fromarray(fg.astype(np.uint8)).resize((nw, nh), Image.Resampling.LANCZOS)
     canvas = Image.new("L", (28, 28), color=0)
     canvas.paste(resized, ((28 - nw) // 2, (28 - nh) // 2))
-    
+
     tensor = (np.array(canvas, dtype=np.float32) / 255.0).reshape(1, 28, 28, 1)
     return tensor, img_b64
 
